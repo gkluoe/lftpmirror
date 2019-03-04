@@ -12,24 +12,66 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The lftpmirror tool"""
+#!/usr/bin/python
+
+import subprocess 
+import sys
 import argparse
 
-VERSION = "0.0.1"
-DESCRIPTION = """This is the lftpmirror tool"""
+DESCRIPTION = 'Back up some sources to a target'
+VERSION = '0.0.1'
 
 def main():
-    """Main function - do useful stuff here!"""
     args = process_args()
 
-    # Now do stuff!
-    assert args
+    server = args.server
+    port = args.port
+    user = args.user
+
+    sources = args.sources.split(',') 
+
+    target = args.target 
+
+    if args.erase:
+        cmd='rm -r {}/\n'.format(target)
+    else:
+        cmd=''
+
+    for source in sources:
+        cmd += 'mirror -e --verbose=5 --reverse {} {}\n'.format(source, target+source)
+
+    ftp = subprocess.Popen(['lftp', '-u', user, 'sftp://{}:{}'.format(server, port)], stdin=subprocess.PIPE)
+
+    ftp.communicate(cmd)
+
 
 def process_args(argv=None):
     """Process any commandline arguments"""
     parser = argparse.ArgumentParser(description=DESCRIPTION,
                                      version=VERSION)
+
+
+    parser.add_argument("-e", "--erase", help="Erase everything in the target directory before starting: DESTRUCTIVE!",
+                    action="store_true")
+
+    parser.add_argument("-d", "--dest-host", help="Server where target directory lives",
+                    dest="server", required=True)
+
+    parser.add_argument("-p", "--port", help="Port to use to connect to target server",
+		    required=True)
+    
+    parser.add_argument("-u", "--user", help="Username,password (use 'username, for no password)",
+                    required=True)
+
+    parser.add_argument("-s", "--sources", help="Comma-separated list of source directories",
+                    required=True)
+
+    parser.add_argument("target", help="Target directory on the remote server",
+                    )
+
     args = parser.parse_args(argv)
     return args
+
 
 if __name__ == "__main__":
     main()
