@@ -19,7 +19,7 @@ import sys
 import argparse
 
 DESCRIPTION = 'Back up some sources to a target'
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 def main():
     args = process_args()
